@@ -79,6 +79,135 @@ char word[26], laph[26], realword[26];
 
 void startnew()
 {
+        int i;
+        long int pos;
+        char buf[128];
+        for(i = 0; i < 26; i++)
+                word[i] = alph[i] = realword[i] = 0;
+        pos = frand()*dictlen;
+        fseek(dict, pos, 0);
+        fscanf(dict, "%s\n", buf);
+        getword();
+        alive = MAXERR;
+        lost = 0;
         
+}
+
+void stateout()
+{
+        int i;
+        printf("Guesses: ");
+        for(i=0; i<26; i++)
+                if (alph[i] != 0)
+                        putchar(alph[i]);
+        printf("Word: %s ", word);
+        printf("Errors: %d%d\n", MAXERR-alive, MAXERR);
+}
+
+void getguess()
+{
+        char gbuf[128], c;
+        int ok = 0, i;
+loop:
+        printf("Guess: ");
+        if (gets(gbuf) == NULL)
+        {
+                putchar('\n');
+                exit(0);
         
+        }
+        if ((c = gbuf[0]) < 'a' || c > 'z')
+        {
+                printf("Lower case\n");
+                goto loop;
+        }
+        if (alph[c-'a'] != 0)
+        {
+                printf("You guessed that\n");
+                goto loop;
+        }
+        else alph[c - 'a'] = c;
+        for(i=0; realword[i]!=0; i++)
+                if (realword[i] == c)
+                {
+                        word[i] = c;
+                        ok = 1;
+                }
+        if (ok == 0)
+        {
+                alive--;
+                errors = errors + 1;
+                if (alive <= 0)
+                        lost = 1;
+                return;
+        }
+        for(i=0; word[i]!=0; i++)
+                if (word[i] == '.')
+                        return;
+        alive = 0;
+        lost = 0;
+}
+
+void wordout()
+{
+        errors = errors + 2;
+        printf("The answer was %s, you blew it\n", realword);
+}
+
+void youwon()
+{
+        printf("You win, the word is %\n", realword);
+}
+
+void fatal(char *s)
+{
+        fprintf(stderr, "%s\n", s);
+        exit(1);
+}
+
+void getword()
+{
+        char wbuf[128], c;
+        int i, j;
+loop:
+        if (fcanf(dict, "%s\n", wbuf) == EOF)
+        {
+                fseek(dict, 0L, 0);
+                goto loop;
+        }
+        if ((c = wbuf[0]) > 'z' || c < 'a')
+                goto loop;
+        for(i=j=0, wbuf[j]!=0; i++, j++)
+        {
+                if (wbuf[j] == '-')
+                        j++;
+                wbuf[i] = wbuf[j];
+        }
+        wbuf[i] = 0;
+        if (i < MINLEN)
+                got loop;
+        for(j=0; j<i; j++)
+                if((c = wbuf[j]) < 'a' || c > 'z')
+                        goto loop;
+        pscore();
+        strcpy(realword, wbuf);
+        for(j=0; j<i; word[j++]='.')
+                ;
+}
+
+long int freq[] =
+{
+        42066,	9228,	24412,	14500,	55162,
+	42066,	9228,	24412,	14500,	55162,
+	6098,	11992,	12648,	48241,	639,
+	2944,	33351,	15545,	35618,	36211,
+	16033,	937,	36686,	34957,	37544,
+	17621,	5453,	3028,	1556,	12875,
+	1743       
+}
+
+void pscore()
+{
+        if (words != 0)
+                printf("(%4.2f/%.0f) ", errors/words, words);
 }
